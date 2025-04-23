@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
-from time import sleep
+from time import sleep, time
 
 from ev3dev2.motor import LargeMotor, MediumMotor, OUTPUT_A, OUTPUT_B, OUTPUT_D, SpeedPercent
 
 from ev3dev2.sensor import INPUT_1, INPUT_3, INPUT_4
 from ev3dev2.sensor.lego import TouchSensor, ColorSensor
+
+MAX_TURN_SPEED = 25
+MAX_SPEED = 50
 
 color_left = ColorSensor(INPUT_1)
 color_right = ColorSensor(INPUT_4)
@@ -15,8 +18,10 @@ left_motor = LargeMotor(OUTPUT_A)
 right_motor = LargeMotor(OUTPUT_B)
 hook = MediumMotor(OUTPUT_D)
 
-base_speed = 10
+base_speed = 25
 turn_multiplier = 0.5
+step = 0.01
+rotate_time = 1
 
 def is_black(sensor):
     return sensor.color == ColorSensor.COLOR_BLACK
@@ -33,17 +38,34 @@ def is_black(sensor):
 # 	sleep(1.0)
 
 
-def rotate_left(speed):
-	left_motor.on(SpeedPercent(0))
-	right_motor.on(SpeedPercent(speed))
-
-def rotate_right(speed):
-	left_motor.on(SpeedPercent(speed))
+def rotate_left_easy(speed, time):
+	left_motor.on(SpeedPercent(-speed))
 	right_motor.on(SpeedPercent(0))
+	sleep(time)
+
+
+def rotate_right_easy(speed, time):
+	left_motor.on(SpeedPercent(0))
+	right_motor.on(SpeedPercent(-speed))
+	sleep(time)
+
+
+def rotate_left_hard():
+	while is_black(color_left):
+		left_motor.on(SpeedPercent(-MAX_TURN_SPEED))
+		right_motor.on(SpeedPercent(MAX_TURN_SPEED))
+
+
+def rotate_right_hard():
+	while is_black(color_right):
+		left_motor.on(SpeedPercent(MAX_TURN_SPEED))
+		right_motor.on(SpeedPercent(MAX_TURN_SPEED))
+
 
 def follow_line():
 	straight_counter = 40
-	freq = 0.05
+	rotate_counter = 0
+	speed = 20
 	while True:
 		if touch.is_pressed:
 			sleep(0.5)
@@ -51,19 +73,19 @@ def follow_line():
 		left_black = is_black(color_left)
 		right_black = is_black(color_right)
 
-		if straight_counter > 40:
-			speed = base_speed
-			freq = 0.05
-		
+		if straight_counter > 30:
+			speed = base_speed # prędkość na prostych
 		else:
-			speed = base_speed * turn_multiplier
-			freq //= 10
+			speed = base_speed * turn_multiplier # prędkość na zakrętach
 		
+
 		if not left_black and not right_black:
 			# stan jedź prosto
 			straight_counter += 1
+			rotate_counter = 0
 			left_motor.on(SpeedPercent(speed))
 			right_motor.on(SpeedPercent(speed))
+			sleep(step)
 
 		else:
 			straight_counter = 0
@@ -71,18 +93,29 @@ def follow_line():
 			# stan na zakręcie
 			if left_black:
 				# Czarna linia po lewej – skręć w lewo
-				rotate_left(speed)
-				
+				rotate_counter += 1
+				if rotate_counter > rotate_time / step:
+					# rotate_left_hard(speed, step)
+					pass
+				else:
+					rotate_left_easy(speed, step)
+
+
 			elif right_black:
 				# Czarna linia po prawej – skręć w prawo
-				rotate_right(speed)
+				rotate_counter += 1
+				if rotate_counter > rotate_time / step:
+					# rotate_right_hard(speed, step)
+					pass
+				else:
+					rotate_right_easy(speed, step)
 				
 			else:
 				# skrzyżowanie lub prosto na łuku
 				left_motor.on(SpeedPercent(speed))
 				right_motor.on(SpeedPercent(speed))
+				sleep(step)
 
-		sleep(0.005)
 
 
 def run():
@@ -93,6 +126,18 @@ def run():
 	while running:
 		running = follow_line()
     
+
+# def measure_rotate_time():
+# 	speed = 20
+# 	start = time()
+# 	sleep(0.5)
+# 	left_motor.on(SpeedPercent(-speed))
+# 	right_motor.on(SpeedPercent(speed))
+# 	if is_black(color_left) and is_black(color_right):
+# 		stop = time()
+# 		print("time elapsed: ", stop-start)
+# 		left_motor.off()
+# 		right_motor.off()
 
 running = False
 print("READY")
