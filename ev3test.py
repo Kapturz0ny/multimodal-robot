@@ -68,8 +68,6 @@ def rotate_right_hard():
 
 def follow_line():
 	straight_counter = 30
-	left_counter = 0
-	right_counter = 0
 	speed = 20
 	while True:
 		if touch.is_pressed:
@@ -93,11 +91,13 @@ def follow_line():
 
 		else:
 			if straight_counter > 30:
-				print("resetting")
 				speed = base_speed
-				left_counter = 0
-				right_counter = 0
+				if left_black and not right_black:
+					rotate_left_easy(speed, step * 5)
+				elif right_black and not left_black:
+					rotate_right_easy(speed, step * 5)
 				go_back(speed, step * 30)
+				
 			elif straight_counter > 5:
 				speed = base_speed
 				go_back(speed, step * 5)
@@ -107,26 +107,18 @@ def follow_line():
 			# stan na zakręcie
 			if left_black and not right_black:
 				# Czarna linia po lewej – skręć w lewo
-				left_counter += 1
-				if right_counter < left_counter * 3:
-					rotate_left_easy(speed, step * 5)
+				rotate_left_easy(speed, step * 5)
 
 
 			elif right_black and not left_black:
 				# Czarna linia po prawej – skręć w prawo
-				right_counter += 1
-				if left_counter < right_counter * 3:
-					rotate_right_easy(speed, step * 5)
+				rotate_right_easy(speed, step * 5)
 				
 			else:
 				# skrzyżowanie lub prosto na łuku
 				left_motor.on(SpeedPercent(speed))
 				right_motor.on(SpeedPercent(speed))
-				sleep(step * 20)
-		
-		print('Left counter: ' + str(left_counter)) 
-		print('Right counter: ' + str(right_counter))
-
+				sleep(step * 10)
 
 
 def run():
