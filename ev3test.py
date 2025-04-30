@@ -18,7 +18,7 @@ left_motor = LargeMotor(OUTPUT_A)
 right_motor = LargeMotor(OUTPUT_B)
 hook = MediumMotor(OUTPUT_D)
 
-base_speed = 25
+base_speed = 20
 turn_multiplier = 0.5
 step = 0.01
 rotate_time = 1
@@ -67,8 +67,7 @@ def rotate_right_hard():
 
 
 def follow_line():
-	straight_counter = 40
-	rotate_counter = 0
+	straight_counter = 30
 	speed = 20
 	while True:
 		if touch.is_pressed:
@@ -78,52 +77,48 @@ def follow_line():
 		right_black = is_black(color_right)
 
 		if straight_counter > 30:
-			speed = base_speed # prędkość na prostych
+			speed = 2 * base_speed # prędkość na prostych
 		else:
-			speed = base_speed * turn_multiplier # prędkość na zakrętach
+			speed = base_speed # prędkość na zakrętach
 		
 
 		if not left_black and not right_black:
 			# stan jedź prosto
 			straight_counter += 1
-			rotate_counter = 0
 			left_motor.on(SpeedPercent(speed))
 			right_motor.on(SpeedPercent(speed))
-			sleep(step)
+			sleep(step * 0.3) 
 
 		else:
 			if straight_counter > 30:
-				speed = base_speed * turn_multiplier
-				go_back(speed, step * 10)
+				speed = base_speed
+				if left_black and not right_black:
+					rotate_left_easy(speed, step * 5)
+				elif right_black and not left_black:
+					rotate_right_easy(speed, step * 5)
+				go_back(speed, step * 30)
+				
+			elif straight_counter > 5:
+				speed = base_speed
+				go_back(speed, step * 5)
 
 			straight_counter = 0
-			speed = base_speed * turn_multiplier
+			speed = base_speed
 			# stan na zakręcie
 			if left_black and not right_black:
 				# Czarna linia po lewej – skręć w lewo
-				rotate_counter += 1
-				if rotate_counter > rotate_time / step:
-					# rotate_left_hard(speed, step)
-					pass
-				else:
-					rotate_left_easy(speed, step)
+				rotate_left_easy(speed, step * 5)
 
 
 			elif right_black and not left_black:
 				# Czarna linia po prawej – skręć w prawo
-				rotate_counter += 1
-				if rotate_counter > rotate_time / step:
-					# rotate_right_hard(speed, step)
-					pass
-				else:
-					rotate_right_easy(speed, step)
+				rotate_right_easy(speed, step * 5)
 				
 			else:
 				# skrzyżowanie lub prosto na łuku
 				left_motor.on(SpeedPercent(speed))
 				right_motor.on(SpeedPercent(speed))
-				sleep(step * 20)
-
+				sleep(step * 16)
 
 
 def run():
@@ -154,3 +149,4 @@ while True:
 	right_motor.off()
 	hook.off()
 	run()
+	
