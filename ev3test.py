@@ -118,7 +118,7 @@ def follow_line():
 				# skrzyżowanie lub prosto na łuku
 				left_motor.on(SpeedPercent(speed))
 				right_motor.on(SpeedPercent(speed))
-				sleep(step * 10)
+				sleep(step * 16)
 
 
 def run():
@@ -149,3 +149,4 @@ while True:
 	right_motor.off()
 	hook.off()
 	run()
+	
