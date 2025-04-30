@@ -49,6 +49,10 @@ def rotate_right_easy(speed, time):
 	right_motor.on(SpeedPercent(-speed))
 	sleep(time)
 
+def go_back(speed, time):
+	left_motor.on(SpeedPercent(-speed))
+	right_motor.on(SpeedPercent(-speed))
+	sleep(time)
 
 def rotate_left_hard():
 	while is_black(color_left):
@@ -88,10 +92,15 @@ def follow_line():
 			sleep(step)
 
 		else:
+			if straight_counter > 30:
+				speed = base_speed * turn_multiplier
+				go_back(speed, 0.1)
+
 			straight_counter = 0
 			speed = base_speed * turn_multiplier
 			# stan na zakręcie
 			if left_black:
+				print("left")
 				# Czarna linia po lewej – skręć w lewo
 				rotate_counter += 1
 				if rotate_counter > rotate_time / step:
@@ -102,6 +111,7 @@ def follow_line():
 
 
 			elif right_black:
+				print("right")
 				# Czarna linia po prawej – skręć w prawo
 				rotate_counter += 1
 				if rotate_counter > rotate_time / step:
@@ -111,6 +121,7 @@ def follow_line():
 					rotate_right_easy(speed, step)
 				
 			else:
+				print("crossroads")
 				# skrzyżowanie lub prosto na łuku
 				left_motor.on(SpeedPercent(speed))
 				right_motor.on(SpeedPercent(speed))
