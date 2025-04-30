@@ -94,13 +94,12 @@ def follow_line():
 		else:
 			if straight_counter > 30:
 				speed = base_speed * turn_multiplier
-				go_back(speed, 0.1)
+				go_back(speed, step * 10)
 
 			straight_counter = 0
 			speed = base_speed * turn_multiplier
 			# stan na zakręcie
-			if left_black:
-				print("left")
+			if left_black and not right_black:
 				# Czarna linia po lewej – skręć w lewo
 				rotate_counter += 1
 				if rotate_counter > rotate_time / step:
@@ -110,8 +109,7 @@ def follow_line():
 					rotate_left_easy(speed, step)
 
 
-			elif right_black:
-				print("right")
+			elif right_black and not left_black:
 				# Czarna linia po prawej – skręć w prawo
 				rotate_counter += 1
 				if rotate_counter > rotate_time / step:
@@ -121,11 +119,10 @@ def follow_line():
 					rotate_right_easy(speed, step)
 				
 			else:
-				print("crossroads")
 				# skrzyżowanie lub prosto na łuku
 				left_motor.on(SpeedPercent(speed))
 				right_motor.on(SpeedPercent(speed))
-				sleep(step)
+				sleep(step * 20)
 
 
 
