@@ -40,7 +40,7 @@ right_motor = LargeMotor(OUTPUT_B)
 hook = MediumMotor(OUTPUT_D)
 
 BASE_SPEED = 20
-STRAIGHT_MULTIPLIER = 1
+STRAIGHT_MULTIPLIER = 1.5
 STEP = 0.01
 BLACK_COLOR = ColorSensor.COLOR_BLACK
 PICK_COLOR = ColorSensor.COLOR_GREEN
@@ -134,6 +134,7 @@ def transporter():
 	is_right = True
 	while True:
 		if task == Task.PICK_UP:
+			task = Task.DROP_OFF
 			try:
 				follow_line(BLACK_COLOR, PICK_COLOR)
 			except LeftSideDetected:
@@ -153,9 +154,9 @@ def transporter():
 				try:
 					follow_line(BLACK_COLOR, PICK_COLOR)
 				except LeftSideDetected:
-					rotate_left_easy(BASE_SPEED, STEP * 5)
+					rotate_left_easy(BASE_SPEED, STEP * 15)
 				except RightSideDetected:
-					rotate_right_easy(BASE_SPEED, STEP * 5)
+					rotate_right_easy(BASE_SPEED, STEP * 15)
 				except PackageAreaDetected:
 					pick_up_object()
 					xdd = False
@@ -168,9 +169,9 @@ def transporter():
 				try:
 					follow_line(BLACK_COLOR, PICK_COLOR, back_to_line=True)
 				except LeftSideDetected:
-					rotate_left_easy(BASE_SPEED, STEP * 5)
+					rotate_left_easy(BASE_SPEED, STEP * 15)
 				except RightSideDetected:
-					rotate_right_easy(BASE_SPEED, STEP * 5)
+					rotate_right_easy(BASE_SPEED, STEP * 15)
 				except PackageAreaDetected: # detected black line
 					xdd = False
 				except StopButtonPressed:
@@ -179,9 +180,9 @@ def transporter():
 			print("ROTATE 90")
 			rotate_90(is_right)
 			
-			task = Task.DROP_OFF
 
 		elif task == Task.DROP_OFF:
+			task = Task.PICK_UP
 			print("STARTED DROP OFF")
 			try:
 				follow_line(BLACK_COLOR, DROP_COLOR)
@@ -202,9 +203,9 @@ def transporter():
 				try:
 					follow_line(BLACK_COLOR, DROP_COLOR)
 				except LeftSideDetected:
-					rotate_left_easy(BASE_SPEED, STEP * 5)
+					rotate_left_easy(BASE_SPEED, STEP * 15)
 				except RightSideDetected:
-					rotate_right_easy(BASE_SPEED, STEP * 5)
+					rotate_right_easy(BASE_SPEED, STEP * 15)
 				except PackageAreaDetected:
 					drop_off_object()
 					return False
@@ -218,9 +219,9 @@ def transporter():
 				try:
 					follow_line(BLACK_COLOR, DROP_COLOR, back_to_line=True)
 				except LeftSideDetected:
-					rotate_left_easy(BASE_SPEED, STEP * 5)
+					rotate_left_easy(BASE_SPEED, STEP * 15)
 				except RightSideDetected:
-					rotate_right_easy(BASE_SPEED, STEP * 5)
+					rotate_right_easy(BASE_SPEED, STEP * 15)
 				except PackageAreaDetected: # detected black line
 					xdd = False
 				except StopButtonPressed:
@@ -229,7 +230,6 @@ def transporter():
 			print("ROTATE 90")
 			rotate_90(is_right)
 			
-			task = Task.PICK_UP
 
 	
 def follow_line(color, snd_color=None, back_to_line=False):
@@ -258,18 +258,26 @@ def follow_line(color, snd_color=None, back_to_line=False):
 			raise PackageAreaDetected
 
 		elif is_color(csensor_left, snd_color):
-			print("LEWY KOLOROWY SKRĘT")
-			if is_color(csensor_right, color):
-				raise PackageAreaDetected
-			go_back(speed, STEP * go_back_steps)
-			raise LeftSideDetected
+			print("csensor_left.color: ", csensor_left.color)
+			print("snd_color: ", snd_color)
+			sleep(0.01)
+			if is_color(csensor_left, snd_color):
+				print("LEWY KOLOROWY SKRĘT")
+				if is_color(csensor_right, color):
+					raise PackageAreaDetected
+				go_back(speed, STEP * go_back_steps)
+				raise LeftSideDetected
 
 		elif is_color(csensor_right, snd_color):
-			print("PRAWY KOLOROWY SKRĘT")
-			if is_color(csensor_left, color):
-				raise PackageAreaDetected
-			go_back(speed, STEP * go_back_steps)
-			raise RightSideDetected
+			print("csensor_right.color: ", csensor_right.color)
+			print("snd_color: ", snd_color)
+			sleep(0.01)
+			if is_color(csensor_right, snd_color):
+				print("PRAWY KOLOROWY SKRĘT")
+				if is_color(csensor_left, color):
+					raise PackageAreaDetected
+				go_back(speed, STEP * go_back_steps)
+				raise RightSideDetected
 
 		if not left_color_match and not right_color_match:
 			print("PROSTO")
@@ -280,8 +288,8 @@ def follow_line(color, snd_color=None, back_to_line=False):
 			sleep(STEP * 0.3) 
 
 		else:
+			speed = BASE_SPEED
 			if straight_counter > 30:
-				speed = BASE_SPEED
 				
 				if left_color_match and not right_color_match:
 					print("LEWO WYKRYTE")
@@ -290,26 +298,22 @@ def follow_line(color, snd_color=None, back_to_line=False):
 				elif right_color_match and not left_color_match:
 					print("PRAWO WYKRYTE")
 					rotate_right_easy(speed, STEP * 5)
-				go_back(speed, STEP * 30)
+				go_back(speed, STEP * 20)
 				
 			elif straight_counter > 5:
-				speed = BASE_SPEED
 				go_back(speed, STEP * 5)
 
 			straight_counter = 0
-			speed = BASE_SPEED
 			
 			if left_color_match and not right_color_match:
 				# Czarna linia po lewej – skręć w lewo
 				print("LEWO")
-				rotate_left_easy(speed, STEP * 5)
+				rotate_left_easy(speed, STEP * 15)
 
 			elif right_color_match and not left_color_match:
 				# Czarna linia po prawej – skręć w prawo
-				if is_color(csensor_left, snd_color):
-					raise PackageAreaDetected
 				print("PRAWO")
-				rotate_right_easy(speed, STEP * 5)
+				rotate_right_easy(speed, STEP * 15)
 				
 			else:
 				if back_to_line:
