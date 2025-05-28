@@ -39,7 +39,8 @@ left_motor = LargeMotor(OUTPUT_A)
 right_motor = LargeMotor(OUTPUT_B)
 hook = MediumMotor(OUTPUT_D)
 
-BASE_SPEED = 20
+RUNNING_SPEED = 15
+BASE_SPEED = 22
 STRAIGHT_MULTIPLIER = 1.5
 STEP = 0.01
 BLACK_COLOR = ColorSensor.COLOR_BLACK
@@ -82,6 +83,15 @@ def rotate_90(is_right):
 	left_motor.on(SpeedPercent(BASE_SPEED*turn))
 	right_motor.on(SpeedPercent(BASE_SPEED*-turn))
 	sleep(0.9)
+
+def rotate_75(is_right):
+	left_motor.on(SpeedPercent(BASE_SPEED))
+	right_motor.on(SpeedPercent(BASE_SPEED))
+	sleep(0.3)
+	turn = 1 if is_right else -1
+	left_motor.on(SpeedPercent(BASE_SPEED*turn))
+	right_motor.on(SpeedPercent(BASE_SPEED*-turn))
+	sleep(0.7)
 
 def rotate_180():
 	left_motor.on(SpeedPercent(BASE_SPEED))
@@ -147,6 +157,9 @@ def transporter():
 				return False
 			
 			print("ROTATE BOX")
+			left_motor.on(SpeedPercent(BASE_SPEED))
+			right_motor.on(SpeedPercent(BASE_SPEED))
+			sleep(0.3)
 			rotate_90(is_right)
 			
 			xdd = True
@@ -155,8 +168,10 @@ def transporter():
 					follow_line(BLACK_COLOR, PICK_COLOR)
 				except LeftSideDetected:
 					rotate_left_easy(BASE_SPEED, STEP * 15)
+					pass
 				except RightSideDetected:
 					rotate_right_easy(BASE_SPEED, STEP * 15)
+					pass
 				except PackageAreaDetected:
 					pick_up_object()
 					xdd = False
@@ -170,15 +185,18 @@ def transporter():
 					follow_line(BLACK_COLOR, PICK_COLOR, back_to_line=True)
 				except LeftSideDetected:
 					rotate_left_easy(BASE_SPEED, STEP * 15)
+					pass
 				except RightSideDetected:
 					rotate_right_easy(BASE_SPEED, STEP * 15)
+					pass
 				except PackageAreaDetected: # detected black line
 					xdd = False
+					print("BACK TO LINE CONFIRMED")
 				except StopButtonPressed:
 					return False
 			
-			print("ROTATE 90")
-			rotate_90(is_right)
+			print("ROTATE 75")
+			rotate_75(is_right)
 			
 
 		elif task == Task.DROP_OFF:
@@ -204,8 +222,10 @@ def transporter():
 					follow_line(BLACK_COLOR, DROP_COLOR)
 				except LeftSideDetected:
 					rotate_left_easy(BASE_SPEED, STEP * 15)
+					pass
 				except RightSideDetected:
 					rotate_right_easy(BASE_SPEED, STEP * 15)
+					pass
 				except PackageAreaDetected:
 					drop_off_object()
 					return False
@@ -220,8 +240,10 @@ def transporter():
 					follow_line(BLACK_COLOR, DROP_COLOR, back_to_line=True)
 				except LeftSideDetected:
 					rotate_left_easy(BASE_SPEED, STEP * 15)
+					pass
 				except RightSideDetected:
 					rotate_right_easy(BASE_SPEED, STEP * 15)
+					pass
 				except PackageAreaDetected: # detected black line
 					xdd = False
 				except StopButtonPressed:
@@ -247,9 +269,11 @@ def follow_line(color, snd_color=None, back_to_line=False):
 		print(csensor_right.color)
 
 		if straight_counter > 30:
+			# run_speed = STRAIGHT_MULTIPLIER * RUNNING_SPEED
 			speed = STRAIGHT_MULTIPLIER * BASE_SPEED # prędkość na prostych
 			go_back_steps = 10
 		else:
+			# run_speed = RUNNING_SPEED
 			speed = BASE_SPEED # prędkość na zakrętach
 			go_back_steps = 5
 		
@@ -260,24 +284,24 @@ def follow_line(color, snd_color=None, back_to_line=False):
 		elif is_color(csensor_left, snd_color):
 			print("csensor_left.color: ", csensor_left.color)
 			print("snd_color: ", snd_color)
-			sleep(0.01)
-			if is_color(csensor_left, snd_color):
-				print("LEWY KOLOROWY SKRĘT")
-				if is_color(csensor_right, color):
-					raise PackageAreaDetected
-				go_back(speed, STEP * go_back_steps)
-				raise LeftSideDetected
+			# sleep(0.01)
+			# if is_color(csensor_left, snd_color):
+			print("LEWY KOLOROWY SKRĘT")
+			if is_color(csensor_right, color):
+				raise PackageAreaDetected
+			go_back(speed, STEP * go_back_steps)
+			raise LeftSideDetected
 
 		elif is_color(csensor_right, snd_color):
 			print("csensor_right.color: ", csensor_right.color)
 			print("snd_color: ", snd_color)
-			sleep(0.01)
-			if is_color(csensor_right, snd_color):
-				print("PRAWY KOLOROWY SKRĘT")
-				if is_color(csensor_left, color):
-					raise PackageAreaDetected
-				go_back(speed, STEP * go_back_steps)
-				raise RightSideDetected
+			# sleep(0.01)
+			# if is_color(csensor_right, snd_color):
+			print("PRAWY KOLOROWY SKRĘT")
+			if is_color(csensor_left, color):
+				raise PackageAreaDetected
+			go_back(speed, STEP * go_back_steps)
+			raise RightSideDetected
 
 		if not left_color_match and not right_color_match:
 			print("PROSTO")
